@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Code Viewer</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for a clean look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .code-font { font-family: 'Fira Code', monospace; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a202c; }
+        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+        /* Style for the selected file button */
+        .file-button.active {
+            background-color: #2b6cb0; /* bg-blue-700 */
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col p-4 gap-4">
+
+    <!-- Header -->
+    <header class="text-center">
+        <h1 class="text-3xl font-bold text-teal-400">Python Code Library</h1>
+        <p class="text-gray-400 mt-1">Select a file from the list to view its code.</p>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow flex gap-4 min-h-0">
+
+        <!-- Left Panel: File List -->
+        <div class="w-1/4 bg-gray-800 rounded-lg p-4 flex flex-col">
+            <h2 class="text-lg font-semibold border-b border-gray-700 pb-2 mb-3">Files</h2>
+            <div id="file-list" class="flex-grow overflow-y-auto space-y-2 pr-2">
+                <p id="loading-message" class="text-gray-500">Loading files...</p>
+            </div>
+        </div>
+
+        <!-- Right Panel: Code Viewer -->
+        <div class="w-3/4 bg-gray-800 rounded-lg p-4 flex flex-col">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
+                <h2 id="current-filename" class="text-lg font-semibold text-teal-400">Select a file</h2>
+                <button id="copy-button" onclick="copyCode()" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-1 px-3 text-sm rounded-md transition duration-200">
+                    Copy Code
+                </button>
+            </div>
+            <div class="flex-grow overflow-y-auto bg-gray-900 rounded-md p-4">
+                <pre><code id="code-display" class="code-font text-sm whitespace-pre-wrap"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- LIST OF PYTHON FILES TO LOAD ---
+        // This list is taken directly from your image.
+        const fileNamesToLoad = [
+            'arithmeticnumpy.py',
+            'armstrong.py',
+            'binarysearch.py',
+            'bubble_sort.py',
+            'deleteelem.py',
+            'Hash Table.py',
+            'insertelem.py',
+            'insertionsort.py',
+            'linearsearch.py',
+            'numpyarrayop.py',
+            'pattern.py',
+            'Queue.py',
+            'Retrievehtml.py',
+            'searchelem.py',
+            'selectionsort.py',
+            'sgpi.py',
+            'singlylinkedlist.py',
+            'sortingalgobubble.py',
+            'stack.py'
+        ];
+
+        // This array will be filled with the content of the files
+        const files = [];
+
+        const fileListContainer = document.getElementById('file-list');
+        const currentFilenameEl = document.getElementById('current-filename');
+        const codeDisplayEl = document.getElementById('code-display');
+        const copyButtonEl = document.getElementById('copy-button');
+
+        // Function to display the code of the selected file
+        function displayCode(index) {
+            if (!files[index]) return;
+            currentFilenameEl.textContent = files[index].name;
+            codeDisplayEl.textContent = files[index].code;
+            copyButtonEl.textContent = 'Copy Code';
+
+            // Update active button style
+            const buttons = document.querySelectorAll('.file-button');
+            buttons.forEach((button, i) => {
+                button.classList.toggle('active', i === index);
+            });
+        }
+
+        // Function to copy code to clipboard
+        function copyCode() {
+            const codeToCopy = codeDisplayEl.textContent;
+            if (!codeToCopy) return;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = codeToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                copyButtonEl.textContent = 'Copied!';
+            } catch (err) {
+                copyButtonEl.textContent = 'Failed!';
+                console.error('Failed to copy text: ', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // --- NEW: Asynchronous function to load all files ---
+        async function loadFiles() {
+            for (const name of fileNamesToLoad) {
+                try {
+                    // 'fetch' the file from the same directory
+                    const response = await fetch('./' + name);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    const code = await response.text();
+                    files.push({ name, code });
+                } catch (error) {
+                    console.error(`Could not load file: ${name}`, error);
+                    // Add a placeholder with an error message
+                    const errorMessage = `# ERROR: Could not load this file.\n# Make sure '${name}' is in the same folder as this HTML file and the server is running.`;
+                    files.push({ name, code: errorMessage });
+                }
+            }
+
+            // Once all files are loaded (or failed), build the UI
+            populateFileList();
+        }
+
+        // --- NEW: Function to create the file buttons in the UI ---
+        function populateFileList() {
+            // Clear the "Loading..." message
+            fileListContainer.innerHTML = '';
+
+            files.forEach((file, index) => {
+                const button = document.createElement('button');
+                button.textContent = file.name;
+                button.className = 'file-button w-full text-left p-2 rounded-md hover:bg-gray-700 transition duration-200';
+                button.onclick = () => displayCode(index);
+                fileListContainer.appendChild(button);
+            });
+
+            // Display the first file by default
+            if (files.length > 0) {
+                displayCode(0);
+            } else {
+                currentFilenameEl.textContent = "No files loaded";
+                codeDisplayEl.textContent = "Could not load any files. Please check the `fileNamesToLoad` list in the HTML and make sure the files exist.";
+            }
+        }
+
+
+        // Run the loadFiles function when the page loads
+        window.onload = loadFiles;
+    </script>
+</body>
+</html>
+
