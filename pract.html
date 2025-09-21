@@ -60,14 +60,14 @@
 
     <script>
         // --- LIST OF PYTHON FILES TO LOAD ---
-        // This list is taken directly from your image.
+        // Renamed 'Hash Table.py' to 'HashTable.py' to avoid issues with spaces in URLs.
         const fileNamesToLoad = [
             'arithmeticnumpy.py',
             'armstrong.py',
             'binarysearch.py',
             'bubble_sort.py',
             'deleteelem.py',
-            'Hash Table.py',
+            'HashTable.py', // <-- FIXED FILENAME
             'insertelem.py',
             'insertionsort.py',
             'linearsearch.py',
@@ -124,7 +124,7 @@
             document.body.removeChild(textarea);
         }
 
-        // --- NEW: Asynchronous function to load all files ---
+        // --- Asynchronous function to load all files ---
         async function loadFiles() {
             for (const name of fileNamesToLoad) {
                 try {
@@ -138,7 +138,7 @@
                 } catch (error) {
                     console.error(`Could not load file: ${name}`, error);
                     // Add a placeholder with an error message
-                    const errorMessage = `# ERROR: Could not load this file.\n# Make sure '${name}' is in the same folder as this HTML file and the server is running.`;
+                    const errorMessage = `# ERROR: Could not load this file.\n# Make sure '${name}' is in the same folder as this HTML file.`;
                     files.push({ name, code: errorMessage });
                 }
             }
@@ -147,7 +147,7 @@
             populateFileList();
         }
 
-        // --- NEW: Function to create the file buttons in the UI ---
+        // --- Function to create the file buttons in the UI ---
         function populateFileList() {
             // Clear the "Loading..." message
             fileListContainer.innerHTML = '';
